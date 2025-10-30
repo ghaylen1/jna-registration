@@ -5,57 +5,7 @@ const pool = new Pool({
   ssl: { rejectUnauthorized: false }
 });
 
-// Create registrations table if it doesn't exist
-async function createRegistrationsTable() {
-  try {
-    await pool.query(`
-      CREATE TABLE IF NOT EXISTS registrations (
-        id SERIAL PRIMARY KEY,
-        full_name VARCHAR(100),
-        phone_number VARCHAR(20) NOT NULL UNIQUE,
-        university VARCHAR(100),
-        position VARCHAR(100),
-        member VARCHAR(200),
-        participates_in_jna VARCHAR(10),
-        registered_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-      );
-      
-      CREATE INDEX IF NOT EXISTS idx_registration_phone ON registrations(phone_number);
-      CREATE INDEX IF NOT EXISTS idx_registration_date ON registrations(registered_at);
-    `);
-  } catch (error) {
-    console.error('Error creating registrations table:', error);
-  }
-}
-
-// Save registration data
-async function saveRegistration(student) {
-  try {
-    await pool.query(
-      `INSERT INTO registrations 
-       (full_name, phone_number, university, position, member, participates_in_jna) 
-       VALUES ($1, $2, $3, $4, $5, $6)
-       ON CONFLICT (phone_number) DO UPDATE SET
-       registered_at = CURRENT_TIMESTAMP`,
-      [
-        student.full_name,
-        student.phone_number,
-        student.university,
-        student.position || null,
-        student.member || null,
-        student.participates_in_jna
-      ]
-    );
-    console.log('Registration saved:', student.phone_number);
-  } catch (error) {
-    console.error('Error saving registration:', error);
-  }
-}
-
 exports.handler = async (event) => {
-  // Create registrations table on first request
-  await createRegistrationsTable();
-
   if (event.httpMethod !== 'GET') {
     return {
       statusCode: 405,
@@ -72,17 +22,46 @@ exports.handler = async (event) => {
     };
   }
 
+  let client;
   try {
-    const result = await pool.query(
+    client = await pool.connect();
+    
+    // Search for student
+    const studentResult = await client.query(
       'SELECT * FROM students WHERE phone_number = $1 LIMIT 1',
       [phoneNumber]
     );
 
-    if (result.rows.length > 0) {
-      const student = result.rows[0];
+    if (studentResult.rows.length > 0) {
+      const student = studentResult.rows[0];
       
-      // Save the registration data
-      await saveRegistration(student);
+      console.log('Found student:', student);
+      
+      // Insert into registrations table
+      try {
+        await client.query(
+          `INSERT INTO registrations 
+           (full_name, phone_number, university, position, member, participates_in_jna) 
+           VALUES ($1, $2, $3, $4, $5, $6)`,
+          [
+            student.full_name,
+            student.phone_number,
+            student.university,
+            student.position || null,
+            student.member || null,
+            student.participates_in_jna
+          ]
+        );
+        console.log('Registration saved for:', student.phone_number);
+      } catch (insertError) {
+        // If duplicate, just log it but don't fail
+        if (insertError.code === '23505') {
+          console.log('User already registered:', student.phone_number);
+        } else {
+          console.error('Insert error:', insertError);
+          throw insertError;
+        }
+      }
       
       return {
         statusCode: 200,
@@ -110,6 +89,7 @@ exports.handler = async (event) => {
     }
   } catch (error) {
     console.error('Database error:', error);
+    console.error('Error details:', error.message);
     return {
       statusCode: 500,
       headers: { 'Content-Type': 'application/json' },
@@ -118,5 +98,9 @@ exports.handler = async (event) => {
         message: error.message
       })
     };
+  } finally {
+    if (client) {
+      client.release();
+    }
   }
 };
