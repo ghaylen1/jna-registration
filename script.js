@@ -69,7 +69,6 @@ async function run(event) {
                     <p><strong>Établissement:</strong> ${escapeHtml(data.data.university)}</p>
                     <p><strong>Position:</strong> ${escapeHtml(data.data.position || 'N/A')}</p>
                     <p><strong>Département:</strong> ${escapeHtml(data.data.member || 'N/A')}</p>
-                    <p><strong>Participe à JNA:</strong> ${escapeHtml(data.data.participates_in_jna)}</p>
                 </div>
             `;
             successMessage.style.display = 'block';
@@ -143,7 +142,7 @@ async function submitNewRegistration(event) {
     const university = document.getElementById('regUniversity').value.trim();
     const position = document.getElementById('regPosition').value.trim();
     const member = document.getElementById('regMember').value.trim();
-    const participates = document.getElementById('regParticipates').value;
+    const participates = 'OUI'; // Default value
     
     // Validate required fields
     if (!fullName || fullName.length < 2 || fullName.length > 100) {
@@ -157,13 +156,6 @@ async function submitNewRegistration(event) {
         errorMessage.style.display = 'block';
         document.getElementById('registrationErrorText').textContent = 
             '✗ Établissement invalide (2-100 caractères).';
-        return;
-    }
-    
-    if (!participates || (participates !== 'OUI' && participates !== 'NON')) {
-        errorMessage.style.display = 'block';
-        document.getElementById('registrationErrorText').textContent = 
-            '✗ Veuillez sélectionner une option pour la participation à JNA.';
         return;
     }
     
@@ -223,6 +215,11 @@ async function submitNewRegistration(event) {
         if (data.success) {
             successMessage.style.display = 'block';
             document.getElementById('newRegistrationForm').reset();
+            
+            // Wait 3 seconds then reset and return to search
+            setTimeout(() => {
+                resetAllForms();
+            }, 3000);
         } else {
             errorMessage.style.display = 'block';
             document.getElementById('registrationErrorText').textContent = 
