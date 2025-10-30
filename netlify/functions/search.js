@@ -5,10 +5,18 @@ const pool = new Pool({
   ssl: { rejectUnauthorized: false }
 });
 
+// Validate phone number format
+function isValidPhoneNumber(phone) {
+  const cleaned = phone.replace(/\D/g, '');
+  const phoneRegex = /^216\d{8}$/;
+  return phoneRegex.test(cleaned);
+}
+
 exports.handler = async (event) => {
   if (event.httpMethod !== 'GET') {
     return {
       statusCode: 405,
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ error: 'Method not allowed' })
     };
   }
@@ -18,7 +26,20 @@ exports.handler = async (event) => {
   if (!phoneNumber) {
     return {
       statusCode: 400,
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ error: 'Phone number is required' })
+    };
+  }
+
+  // Validate phone number format
+  if (!isValidPhoneNumber(phoneNumber)) {
+    return {
+      statusCode: 400,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ 
+        success: false,
+        message: 'Format de téléphone invalide' 
+      })
     };
   }
 
@@ -26,23 +47,25 @@ exports.handler = async (event) => {
   try {
     client = await pool.connect();
     
-    // Search for student
-    const studentResult = await client.query(
+    // Search for student with validated phone number
+    const result = await client.query(
       'SELECT * FROM students WHERE phone_number = $1 LIMIT 1',
       [phoneNumber]
     );
 
-    if (studentResult.rows.length > 0) {
-      const student = studentResult.rows[0];
+    if (result.rows.length > 0) {
+      const student = result.rows[0];
       
-      console.log('Found student:', student);
+      console.log('Found student:', student.phone_number);
       
-      // Insert into registrations table
+      // Save the registration data
       try {
         await client.query(
           `INSERT INTO registrations 
            (full_name, phone_number, university, position, member, participates_in_jna) 
-           VALUES ($1, $2, $3, $4, $5, $6)`,
+           VALUES ($1, $2, $3, $4, $5, $6)
+           ON CONFLICT (phone_number) DO UPDATE SET
+           registered_at = CURRENT_TIMESTAMP`,
           [
             student.full_name,
             student.phone_number,
@@ -52,15 +75,11 @@ exports.handler = async (event) => {
             student.participates_in_jna
           ]
         );
-        console.log('Registration saved for:', student.phone_number);
+        console.log('Registration saved:', student.phone_number);
       } catch (insertError) {
-        // If duplicate, just log it but don't fail
-        if (insertError.code === '23505') {
-          console.log('User already registered:', student.phone_number);
-        } else {
-          console.error('Insert error:', insertError);
-          throw insertError;
-        }
+        console.error('Insert error:', insertError.message);
+        console.error('Error code:', insertError.code);
+        // Continue even if registration save fails
       }
       
       return {
@@ -69,11 +88,11 @@ exports.handler = async (event) => {
         body: JSON.stringify({
           success: true,
           data: {
-            full_name: student.full_name,
-            university: student.university,
+            full_name: student.full_name || '',
+            university: student.university || '',
             position: student.position || 'N/A',
             member: student.member || 'N/A',
-            participates_in_jna: student.participates_in_jna
+            participates_in_jna: student.participates_in_jna || 'N/A'
           }
         })
       };
@@ -88,14 +107,16 @@ exports.handler = async (event) => {
       };
     }
   } catch (error) {
-    console.error('Database error:', error);
-    console.error('Error details:', error.message);
+    console.error('Database error:', error.message);
+    console.error('Error code:', error.code);
+    console.error('Query:', error.query);
+    
     return {
       statusCode: 500,
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         error: 'Database error',
-        message: error.message
+        message: 'Une erreur interne s\'est produite'
       })
     };
   } finally {
