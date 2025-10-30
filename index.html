@@ -47,6 +47,7 @@
                 <div class="success-message" id="successMessage" style="display: none;">
                     <h3>Informations trouvées ✓</h3>
                     <div id="resultContent"></div>
+                    <button type="button" class="btn-new-search" onclick="resetAllForms()">Nouvelle recherche</button>
                 </div>
 
                 <div class="error-message" id="errorMessage" style="display: none;">
@@ -86,15 +87,6 @@
                     <div class="form-group">
                         <label for="regMember">Département</label>
                         <input type="text" id="regMember" name="regMember" placeholder="Ex: Département Event">
-                    </div>
-
-                    <div class="form-group">
-                        <label for="regParticipates">Participez-vous à la JNA ? *</label>
-                        <select id="regParticipates" name="regParticipates" required>
-                            <option value="">-- Sélectionner --</option>
-                            <option value="OUI">OUI</option>
-                            <option value="NON">NON</option>
-                        </select>
                     </div>
 
                     <button type="submit" id="submitRegBtn">
