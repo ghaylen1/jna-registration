@@ -320,6 +320,85 @@ button:disabled {
     border-bottom-color: #1b9edb;
 }
 
+/* Registration Button Styling */
+.btn-register {
+    display: block;
+    width: 100%;
+    padding: 14px;
+    margin-top: 15px;
+    background: linear-gradient(135deg, #4caf50 0%, #45a049 100%);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 5px 15px rgba(76, 175, 80, 0.3);
+}
+
+.btn-register:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(76, 175, 80, 0.4);
+}
+
+.btn-register:active {
+    transform: translateY(-1px);
+}
+
+/* Back Button */
+.btn-back {
+    padding: 10px 20px;
+    background: #c3e7fb;
+    color: #1b9edb;
+    border: 2px solid #1b9edb;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin-bottom: 20px;
+}
+
+.btn-back:hover {
+    background: #1b9edb;
+    color: white;
+    transform: translateX(-3px);
+}
+
+/* New Search Button */
+.btn-new-search {
+    display: block;
+    width: 100%;
+    padding: 14px;
+    margin-top: 15px;
+    background: linear-gradient(135deg, #1b9edb 0%, #153a62 100%);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 5px 15px rgba(27, 158, 219, 0.3);
+}
+
+.btn-new-search:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(27, 158, 219, 0.4);
+}
+
+/* Registration Header */
+.registration-header {
+    margin-bottom: 30px;
+}
+
+.registration-header h2 {
+    color: #153a62;
+    font-size: 24px;
+    margin-top: 10px;
+}
+
 @media (max-width: 600px) {
     .header h1 {
         font-size: 26px;
@@ -332,5 +411,9 @@ button:disabled {
     .logo {
         width: 100px;
         height: 100px;
+    }
+    
+    .registration-header h2 {
+        font-size: 20px;
     }
 }
