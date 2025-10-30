@@ -47,18 +47,18 @@ exports.handler = async (event) => {
   try {
     client = await pool.connect();
     
-    // Search for student with validated phone number
-    const result = await client.query(
+    // Search in students table first
+    const studentResult = await client.query(
       'SELECT * FROM students WHERE phone_number = $1 LIMIT 1',
       [phoneNumber]
     );
 
-    if (result.rows.length > 0) {
-      const student = result.rows[0];
+    if (studentResult.rows.length > 0) {
+      const student = studentResult.rows[0];
       
-      console.log('Found student:', student.phone_number);
+      console.log('Found in students table:', student.phone_number);
       
-      // Save the registration data
+      // Also save to registrations if not already there
       try {
         await client.query(
           `INSERT INTO registrations 
@@ -75,11 +75,9 @@ exports.handler = async (event) => {
             student.participates_in_jna
           ]
         );
-        console.log('Registration saved:', student.phone_number);
+        console.log('Registration saved/updated:', student.phone_number);
       } catch (insertError) {
         console.error('Insert error:', insertError.message);
-        console.error('Error code:', insertError.code);
-        // Continue even if registration save fails
       }
       
       return {
@@ -87,6 +85,7 @@ exports.handler = async (event) => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           success: true,
+          source: 'students',
           data: {
             full_name: student.full_name || '',
             university: student.university || '',
@@ -96,20 +95,49 @@ exports.handler = async (event) => {
           }
         })
       };
-    } else {
+    }
+    
+    // If not in students table, search in registrations table
+    const registrationResult = await client.query(
+      'SELECT * FROM registrations WHERE phone_number = $1 LIMIT 1',
+      [phoneNumber]
+    );
+
+    if (registrationResult.rows.length > 0) {
+      const registration = registrationResult.rows[0];
+      
+      console.log('Found in registrations table:', registration.phone_number);
+      
       return {
         statusCode: 200,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          success: false,
-          message: 'Student not found'
+          success: true,
+          source: 'registrations',
+          data: {
+            full_name: registration.full_name || '',
+            university: registration.university || '',
+            position: registration.position || 'N/A',
+            member: registration.member || 'N/A',
+            participates_in_jna: registration.participates_in_jna || 'OUI'
+          }
         })
       };
     }
+    
+    // Not found in either table
+    return {
+      statusCode: 200,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        success: false,
+        message: 'Student not found in any database'
+      })
+    };
+    
   } catch (error) {
     console.error('Database error:', error.message);
     console.error('Error code:', error.code);
-    console.error('Query:', error.query);
     
     return {
       statusCode: 500,
