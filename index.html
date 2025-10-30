@@ -27,28 +27,92 @@
         <div class="form-content">
             <div class="event-info">
                 <h2>À propos de l'événement</h2>
-                <p><strong>JNA (Journée des Nouveaux Ambassadeurs)</strong> est un événement organisé par SOS Villages d'Enfants pour recruter et former de nouveaux ambassadeurs engagés dans la protection de l'enfance.</p>
+                <p><strong>JNA (Journée des Nouveaux Ambassadeurs)</strong> est un événement organisé par SOS Villages d'Enfants pour recruiter et former de nouveaux ambassadeurs engagés dans la protection de l'enfance.</p>
                 <p>Rejoignez notre communauté et devenez un acteur du changement ! 💙</p>
             </div>
 
-            <form id="registrationForm" onsubmit="run(event)">
-                <div class="form-group">
-                    <label for="telephone">Numéro de téléphone *</label>
-                    <input type="tel" id="telephone" name="telephone" required placeholder="+216 XX XXX XXX">
-                </div>
-                <button type="submit" id="submitBtn">
-                    <span id="btnText">Rechercher</span>
-                    <span id="btnLoading" style="display: none;" class="loading"></span>
-                </button>
-            </form>
+            <!-- Search Section -->
+            <div id="searchSection">
+                <form id="registrationForm" onsubmit="run(event)">
+                    <div class="form-group">
+                        <label for="telephone">Numéro de téléphone *</label>
+                        <input type="tel" id="telephone" name="telephone" required placeholder="+216 XX XXX XXX">
+                    </div>
+                    <button type="submit" id="submitBtn">
+                        <span id="btnText">Rechercher</span>
+                        <span id="btnLoading" style="display: none;" class="loading"></span>
+                    </button>
+                </form>
 
-            <div class="success-message" id="successMessage" style="display: none;">
-                <h3>Informations trouvées ✓</h3>
-                <div id="resultContent"></div>
+                <div class="success-message" id="successMessage" style="display: none;">
+                    <h3>Informations trouvées ✓</h3>
+                    <div id="resultContent"></div>
+                </div>
+
+                <div class="error-message" id="errorMessage" style="display: none;">
+                    <p id="errorText">✗ Numéro de téléphone non trouvé. Veuillez vérifier et réessayer.</p>
+                    <button type="button" class="btn-register" onclick="showRegistrationForm()">Voulez-vous vous inscrire ?</button>
+                </div>
             </div>
 
-            <div class="error-message" id="errorMessage" style="display: none;">
-                ✗ Numéro de téléphone non trouvé. Veuillez vérifier et réessayer.
+            <!-- Registration Form Section (Hidden by default) -->
+            <div id="registrationSection" style="display: none;">
+                <div class="registration-header">
+                    <button type="button" class="btn-back" onclick="hideRegistrationForm()">← Retour</button>
+                    <h2>Formulaire d'Inscription</h2>
+                </div>
+
+                <form id="newRegistrationForm" onsubmit="submitNewRegistration(event)">
+                    <div class="form-group">
+                        <label for="regPhone">Numéro de téléphone *</label>
+                        <input type="tel" id="regPhone" name="regPhone" required placeholder="+216 XX XXX XXX">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="regFullName">Nom complet *</label>
+                        <input type="text" id="regFullName" name="regFullName" required placeholder="Votre nom complet">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="regUniversity">Établissement *</label>
+                        <input type="text" id="regUniversity" name="regUniversity" required placeholder="Votre établissement">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="regPosition">Position/Rôle</label>
+                        <input type="text" id="regPosition" name="regPosition" placeholder="Ex: Président(e), Responsable RH">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="regMember">Département</label>
+                        <input type="text" id="regMember" name="regMember" placeholder="Ex: Département Event">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="regParticipates">Participez-vous à la JNA ? *</label>
+                        <select id="regParticipates" name="regParticipates" required>
+                            <option value="">-- Sélectionner --</option>
+                            <option value="OUI">OUI</option>
+                            <option value="NON">NON</option>
+                        </select>
+                    </div>
+
+                    <button type="submit" id="submitRegBtn">
+                        <span id="regBtnText">S'inscrire</span>
+                        <span id="regBtnLoading" style="display: none;" class="loading"></span>
+                    </button>
+                </form>
+
+                <div class="success-message" id="registrationSuccess" style="display: none;">
+                    <h3>Inscription Réussie ✓</h3>
+                    <p>Merci de vous être inscrit(e) à la JNA!</p>
+                    <p>Nous vous contacterons bientôt pour plus de détails.</p>
+                    <button type="button" class="btn-new-search" onclick="resetAllForms()">Nouvelle recherche</button>
+                </div>
+
+                <div class="error-message" id="registrationError" style="display: none;">
+                    <p id="registrationErrorText">✗ Une erreur est survenue. Veuillez réessayer.</p>
+                </div>
             </div>
         </div>
 
@@ -57,3 +121,5 @@
             <p>Ensemble pour protéger les droits de l'enfant 💙</p>
         </div>
     </div>
+</body>
+</html>
