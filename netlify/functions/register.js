@@ -58,16 +58,16 @@ exports.handler = async (event) => {
   const university = sanitizeInput(body.university);
   const position = sanitizeInput(body.position || '');
   const member = sanitizeInput(body.member || '');
-  const participates_in_jna = sanitizeInput(body.participates_in_jna);
+  const participates_in_jna = 'OUI'; // Default value
 
   // Validate required fields
-  if (!full_name || !phone_number || !university || !participates_in_jna) {
+  if (!full_name || !phone_number || !university) {
     return {
       statusCode: 400,
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ 
         success: false,
-        message: 'Les champs requis sont manquants (nom, téléphone, établissement, participation)' 
+        message: 'Les champs requis sont manquants (nom, téléphone, établissement)' 
       })
     };
   }
@@ -127,18 +127,6 @@ exports.handler = async (event) => {
       body: JSON.stringify({ 
         success: false,
         message: 'Numéro de téléphone invalide' 
-      })
-    };
-  }
-
-  // Validate participation choice
-  if (participates_in_jna !== 'OUI' && participates_in_jna !== 'NON') {
-    return {
-      statusCode: 400,
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ 
-        success: false,
-        message: 'Participation invalide (OUI ou NON)' 
       })
     };
   }
