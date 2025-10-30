@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inscription JNA - SOS Villages d'Enfants</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="script.js" defer></script>
+        
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo-container">
+                <div class="logo">
+                    <img src="IMG_1289.png" alt="SOS Villages d'Enfants logo featuring blue silhouettes of children holding hands in a caring, supportive circle with a decorative plant motif, conveying unity and protection" onerror="this.style.display='none'">
+                </div>
+            </div>
+            <h1>Journée des Nouveaux Ambassadeurs</h1>
+            <p>SOS Villages d'Enfants - Inscription JNA</p>
+        </div>
+
+        <div class="form-content">
+            <div class="event-info">
+                <h2>À propos de l'événement</h2>
+                <p><strong>JNA (Journée des Nouveaux Ambassadeurs)</strong> est un événement organisé par SOS Villages d'Enfants pour recruter et former de nouveaux ambassadeurs engagés dans la protection de l'enfance.</p>
+                <p>Rejoignez notre communauté et devenez un acteur du changement ! 💙</p>
+            </div>
+
+            <form id="registrationForm" onsubmit="run(event)">
+                <div class="form-group">
+                    <label for="telephone">Numéro de téléphone *</label>
+                    <input type="tel" id="telephone" name="telephone" required placeholder="+216 XX XXX XXX">
+                </div>
+                <button type="submit" id="submitBtn">
+                    <span id="btnText">Rechercher</span>
+                    <span id="btnLoading" style="display: none;" class="loading"></span>
+                </button>
+            </form>
+
+            <div class="success-message" id="successMessage" style="display: none;">
+                <h3>Informations trouvées ✓</h3>
+                <div id="resultContent"></div>
+            </div>
+
+            <div class="error-message" id="errorMessage" style="display: none;">
+                ✗ Numéro de téléphone non trouvé. Veuillez vérifier et réessayer.
+            </div>
+        </div>
+
+        <div class="footer">
+            <p><strong>SOS Villages d'Enfants Tunisie</strong></p>
+            <p>Ensemble pour protéger les droits de l'enfant 💙</p>
+        </div>
+    </div>
