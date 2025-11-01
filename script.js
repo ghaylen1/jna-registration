@@ -22,6 +22,145 @@ function isValidPhoneNumber(phone) {
     return phoneRegex.test(cleaned);
 }
 
+// Get workshop number based on position or department
+function getWorkshopNumber(position, department) {
+    // Helper function to normalize text
+    function normalize(text) {
+        if (!text) return '';
+        return text.toLowerCase()
+            .normalize("NFD")
+            .replace(/[\u0300-\u036f]/g, "") // Remove accents
+            .trim();
+    }
+    
+    // Check position first
+    if (position && position !== 'N/A') {
+        const pos = normalize(position);
+        
+        // Workshop 1: Presidents and Vice Presidents
+        // Check for president/vice first (most specific)
+        if (pos.includes('president') || 
+            pos.includes('vice') ||
+            pos.match(/\b(pres|vp)\b/)) {
+            return 1;
+        }
+        
+        // Workshop 2: Secrétaire général
+        if (pos.includes('secretaire general') || 
+            pos.includes('secretaire') ||
+            pos.match(/\bsg\b/) ||
+            pos.includes('sec gen')) {
+            return 2;
+        }
+        
+        // Workshop 3: Responsable RH (check before generic "responsable")
+        if (pos.match(/\brh\b/) || 
+            pos.includes('ressources humaines') ||
+            pos.includes('ressource humaine') ||
+            pos.includes('responsable rh') ||
+            pos.includes('respo rh') ||
+            pos.includes('resp rh') ||
+            pos.includes('assistant rh') ||
+            pos.includes('assist rh')) {
+            return 3;
+        }
+        
+        // Workshop 4: Responsable Event
+        if (pos.includes('event') || 
+            pos.includes('evenement') ||
+            pos.includes('responsable event') ||
+            pos.includes('respo event') ||
+            pos.includes('resp event') ||
+            pos.includes('assistant event') ||
+            pos.includes('assist event')) {
+            return 4;
+        }
+        
+        // Workshop 5: Responsable Partenariat
+        if (pos.includes('partenariat') || 
+            pos.includes('partenarariat') || // common typo
+            pos.includes('partnership') ||
+            pos.includes('responsable partenariat') ||
+            pos.includes('respo partenariat') ||
+            pos.includes('resp partenariat') ||
+            pos.includes('assistant partenariat') ||
+            pos.includes('assist partenariat')) {
+            return 5;
+        }
+        
+        // Workshop 6: Responsable Communication (check last to avoid false matches)
+        if (pos.includes('responsable communication') ||
+            pos.includes('respo communication') ||
+            pos.includes('resp communication') ||
+            pos.includes('assistant communication') ||
+            pos.includes('assist communication') ||
+            pos.includes('communication') ||
+            pos.match(/\b(respo|resp|responsable|assistant|assist)\s+(com|comm)\b/) ||
+            pos.match(/\bcomm\b/)) {
+            return 6;
+        }
+    }
+    
+    // Check department if position didn't match
+    if (department && department !== 'N/A') {
+        const dept = normalize(department);
+        
+        // Workshop 3: Département RH
+        if (dept.match(/\brh\b/) || 
+            dept.includes('ressources humaines') ||
+            dept.includes('ressource humaine') ||
+            dept.includes('departement rh') ||
+            dept.includes('depart rh') ||
+            dept.match(/\bdep(artement)?\s+rh\b/)) {
+            return 3;
+        }
+        
+        // Workshop 4: Département Event
+        if (dept.includes('event') || 
+            dept.includes('evenement') ||
+            dept.includes('departement event') ||
+            dept.includes('depart event') ||
+            dept.match(/\bdep(artement)?\s+event\b/)) {
+            return 4;
+        }
+        
+        // Workshop 5: Département Partenariat
+        if (dept.includes('partenariat') || 
+            dept.includes('partenarariat') ||
+            dept.includes('partnership') ||
+            dept.includes('departement partenariat') ||
+            dept.includes('depart partenariat') ||
+            dept.match(/\bdep(artement)?\s+partenariat\b/)) {
+            return 5;
+        }
+        
+        // Workshop 6: Département Communication
+        if (dept.includes('departement communication') ||
+            dept.includes('depart communication') ||
+            dept.includes('communication') ||
+            dept.match(/\bdep(artement)?\s+(communication|com|comm)\b/) ||
+            dept.match(/\bcomm\b/)) {
+            return 6;
+        }
+    }
+    
+    return null;
+}
+
+// Get workshop name
+function getWorkshopName(workshopNumber) {
+    const workshops = {
+        1: 'Présidents et Vices',
+        2: 'Secrétaire Générale',
+        3: 'Départ. RH',
+        4: 'Départ. Event',
+        5: 'Départ. Partenariat',
+        6: 'Départ. Com'
+    };
+    
+    return workshops[workshopNumber] || 'Non assigné';
+}
+
 // Search for existing student
 async function run(event) {
     event.preventDefault();
@@ -63,6 +202,21 @@ async function run(event) {
         const data = await response.json();
         
         if (data.success) {
+            // Get workshop information
+            const workshopNumber = getWorkshopNumber(data.data.position, data.data.member);
+            const workshopName = workshopNumber ? getWorkshopName(workshopNumber) : null;
+            
+            // Create workshop badge HTML if applicable
+            let workshopHTML = '';
+            if (workshopNumber) {
+                workshopHTML = `
+                    <div class="workshop-badge">
+                        <div class="workshop-number">Atelier ${workshopNumber}</div>
+                        <div class="workshop-name">${workshopName}</div>
+                    </div>
+                `;
+            }
+            
             resultContent.innerHTML = `
                 <div class="student-info">
                     <p><strong>Nom complet:</strong> ${escapeHtml(data.data.full_name)}</p>
@@ -70,6 +224,7 @@ async function run(event) {
                     <p><strong>Position:</strong> ${escapeHtml(data.data.position || 'N/A')}</p>
                     <p><strong>Département:</strong> ${escapeHtml(data.data.member || 'N/A')}</p>
                 </div>
+                ${workshopHTML}
             `;
             successMessage.style.display = 'block';
             errorMessage.style.display = 'none';
