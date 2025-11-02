@@ -12,6 +12,37 @@ function isValidPhoneNumber(phone) {
   return phoneRegex.test(cleaned);
 }
 
+// Get all available student tables
+async function getStudentTables(client) {
+  const result = await client.query(`
+    SELECT table_name 
+    FROM information_schema.tables 
+    WHERE table_schema = 'public' 
+    AND table_name LIKE 'students%'
+    ORDER BY table_name
+  `);
+  return result.rows.map(row => row.table_name);
+}
+
+// Search across all student tables
+async function searchInAllTables(client, phoneNumber, tables) {
+  for (const tableName of tables) {
+    try {
+      const result = await client.query(
+        `SELECT * FROM ${tableName} WHERE phone_number = $1 LIMIT 1`,
+        [phoneNumber]
+      );
+      
+      if (result.rows.length > 0) {
+        return { found: true, data: result.rows[0], source: tableName };
+      }
+    } catch (error) {
+      console.error(`Error searching in ${tableName}:`, error.message);
+    }
+  }
+  return { found: false };
+}
+
 exports.handler = async (event) => {
   if (event.httpMethod !== 'GET') {
     return {
@@ -47,16 +78,27 @@ exports.handler = async (event) => {
   try {
     client = await pool.connect();
     
-    // Search in students table first
-    const studentResult = await client.query(
-      'SELECT * FROM students WHERE phone_number = $1 LIMIT 1',
-      [phoneNumber]
-    );
-
-    if (studentResult.rows.length > 0) {
-      const student = studentResult.rows[0];
+    // Get all student tables
+    const studentTables = await getStudentTables(client);
+    
+    if (studentTables.length === 0) {
+      return {
+        statusCode: 500,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          success: false,
+          message: 'No student tables found'
+        })
+      };
+    }
+    
+    // Search in all student tables
+    const searchResult = await searchInAllTables(client, phoneNumber, studentTables);
+    
+    if (searchResult.found) {
+      const student = searchResult.data;
       
-      console.log('Found in students table:', student.phone_number);
+      console.log(`Found in ${searchResult.source}:`, student.phone_number);
       
       // Also save to registrations if not already there
       try {
@@ -85,7 +127,7 @@ exports.handler = async (event) => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           success: true,
-          source: 'students',
+          source: searchResult.source,
           data: {
             full_name: student.full_name || '',
             university: student.university || '',
@@ -97,7 +139,7 @@ exports.handler = async (event) => {
       };
     }
     
-    // If not in students table, search in registrations table
+    // If not in student tables, search in registrations table
     const registrationResult = await client.query(
       'SELECT * FROM registrations WHERE phone_number = $1 LIMIT 1',
       [phoneNumber]
@@ -125,7 +167,7 @@ exports.handler = async (event) => {
       };
     }
     
-    // Not found in either table
+    // Not found in any table
     return {
       statusCode: 200,
       headers: { 'Content-Type': 'application/json' },
